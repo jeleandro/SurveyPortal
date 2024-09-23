@@ -1,0 +1,42 @@
+name: surveyportal
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - jupyter
+  - seaborn
+  - scipy
+  - statsmodels
+  - plotly
+  - streamlit
+
+
+
+  - polars
+  - pyarrow
+  - openpyxl
+  - xlsxwriter
+  - tabulate
+  - ipywidgets
+  - tqdm
+
+
+# dev
+  - streamlit
+  - streamlit-extras
+  - plotly
+  - pydeck
+
+# ml
+  - scikit-learn==1.5.1
+  - shap
+  - seaborn
+  - statsmodels
+  - xgboost
+  - ydata-profiling
+  # - optbinning
+  - nltk

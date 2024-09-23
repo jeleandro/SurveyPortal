@@ -1,2 +1,1 @@
 # SurveyPortal
-Survey streamlit portal
