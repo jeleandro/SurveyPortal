@@ -73,8 +73,9 @@ st.write("""
 """, unsafe_allow_html=True)
 
 ##############################################################################################################
-st.title("Visão Demográfica")
-st.html("""
+st.title(f"Visão Demográfica {'para '+chosenBank if chosenBank!= '' else ''}")
+st.html(f"""
+<p>Número de respondentes: {len(df_core)}</p>
 <p>Abaixo segue uma visão interativa dos respondentes da pesquisa</p>
 """)
 st.write("<br/><br/>", unsafe_allow_html=True)
