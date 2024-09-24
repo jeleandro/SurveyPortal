@@ -39,6 +39,21 @@ CATEG_INCOME_RANGE=  pd.CategoricalDtype(
     ], ordered=True
 )
 
+CATEG_SOCIAL_CLASS=  {
+    'Até 1412':'DE',
+    '1.413 a 2.824':'C2',
+    '2.825 a 3.135':'C2', 
+    '3.136 a 4.236':'C1', 
+    '4.237 a 5.648':'C1',
+    '5.649 a 7.060':'B2',
+    '7.060 a 8.472':'B2',
+    '8.473 a 9.884':'B2',
+    '9.885 a 11.296':'B1',
+    '11.297 a 12.708':'B1', 
+    '12.708 a 14.120':'B1',
+    '14.120 a 15.532':'B1',
+    'Mais 15.532':'A',
+}
 FAIXA_IDADE = {18:'18-24', 25:'25-34', 35:'35-44', 45:'45-54', 55:'55-64', 65:'65-74', 75:'75->'}
 CATEG_AGE =  pd.CategoricalDtype(categories=list(FAIXA_IDADE.values()), ordered=True)
 
@@ -53,20 +68,33 @@ CATEG_JOB_TYPE=  pd.CategoricalDtype(
     ], ordered=True
 )
 
+CATEG_BANK_CATEG =  pd.CategoricalDtype(
+    categories=[
+        'Incumbentes',
+        'Digitais',
+        'BancoPublico', 
+        'Investimentos',
+        'Financeiras',
+        'Demais',
+    ], ordered=True
+)
+
 
 
 agrupamento_bancos_geral = {
-    'Nubank': 'Digitais',
+    
+
     'CEF': 'BancoPublico',
-    'BB': 'BancoPublico',
-    'Itau': 'BancoTradicional',
-    'Iti': 'BancoTradicional',
-    'Bradesco': 'BancoTradicional',
-    'Next': 'BancoTradicional',
+    'BB': 'Incumbentes',
+    'Santander': 'Incumbentes',
+    'Itau': 'Incumbentes',
+    'Iti': 'Demais',
+    'Bradesco': 'Incumbentes',
+    
+    'Nubank': 'Digitais',
     'PicPay': 'Digitais',
     'Original': 'Digitais',
     'MercadoPago': 'Digitais',
-    'Santander': 'BancoTradicional',
     'PagBank': 'Digitais',
     'Inter': 'Digitais',
     'C6': 'Digitais',
@@ -75,24 +103,28 @@ agrupamento_bancos_geral = {
     'BTG': 'Investimentos',
     'Safra': 'Investimentos',
     'AgZero': 'Investimentos',
+    'Daycoval': 'Investimentos',
 
     'Pan': 'Financeiras',
     'BV': 'Financeiras',
     'Crefisa': 'Financeiras',
 
-    'Agibank': 'Digitais',
-    'Daycoval': 'Digitais',
-    'Sicredi': 'Cooperativa',
-    'Sicoob': 'Cooperativa',
-    'Unicred': 'Cooperativa',
-    'Digio': 'Digitais',
     'Neon': 'Digitais',
-    'Help': 'Digitais',
+    'Help': 'Demais',
     'BS2': 'Digitais',
-    'Outros': 'Outros'
+    'Agibank': 'Digitais',
+    
+
+    'Next': 'Demais',
+    'Sicredi': 'Demais',
+    'Sicoob': 'Demais',
+    'Unicred': 'Demais',
+    'Digio': 'Demais',
+
+    'Outros': 'Demais'
  }
 
-BANKS_JOB_TYPE=  pd.CategoricalDtype(
+BANKS_TYPE=  pd.CategoricalDtype(
     categories=[
         'Nubank',
         'Itau',
@@ -105,14 +137,14 @@ BANKS_JOB_TYPE=  pd.CategoricalDtype(
         'BS2',
         'BTG',
         'BV',
+        'Inter',
         'C6',
+        'Iti',
+        'MercadoPago',
         'Crefisa',
         'Daycoval',
         'Digio',
         'Help',
-        'Inter',
-        'Iti',
-        'MercadoPago',
         'Neon',
         'Next',
         'PagBank',

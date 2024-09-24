@@ -18,7 +18,7 @@ sys.path.append('..')
 
 import constants
 import pandas_utils
-from data_model import categoricals_demographics, load_survey_core, load_product_bank
+from data_model import categoricals_demographics, load_survey_core, load_product_bank, load_nps_questions
 
 
 ################## Page config
@@ -27,8 +27,16 @@ st.set_page_config(layout="wide")
 
 ############## Data loading
 df = load_survey_core()
-
 df_products = load_product_bank()
+df_nps = load_nps_questions()
+
+df_indice_digital = (
+    df_nps.query('pergunta == "consigo_contratar_100digital"')
+    .assign(digitalizacao = lambda x:x['nps'].str.lower().isin(['concordo','concordo totalmente']).astype(int))
+    [['id','digitalizacao']]
+)
+
+df = pd.merge(df, df_indice_digital, on='id', how='left').fillna({'digitalizacao':0})
 
 ############## Side Bar
 
@@ -118,6 +126,155 @@ if len(df_filter)>0:
 else:
     st.write("Nenhum registro foi selecionado. O filtro será ignorado")
 
+
+## temp
+
+trainingSet = (
+    df_products.pivot_table(index='id', columns='produto', values='banco', aggfunc='nunique', fill_value=0)
+    .merge(df[['id','default','digitalizacao']], on='id')
+    .assign(default=lambda x:(x['default']=='Sim').astype(int))
+    .drop('id',axis=1)
+)
+
+
+
+st.write("## Produtos com mais impacto na inadimplência e digitalização")
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
+
+
+# clf_default = RandomForestClassifier(n_estimators=100, random_state=42)
+clf_default = LogisticRegressionCV(random_state=42, Cs=10)
+clf_default.fit(trainingSet.drop(['default','digitalizacao'], axis=1), trainingSet['default'])
+
+featureImportanceDefault = pd.DataFrame({
+    'features':clf_default.feature_names_in_,
+    # 'importance':clf.feature_importances_,
+    'importance':np.round(clf_default.coef_.flatten(),4),
+    'color':np.where(clf_default.coef_.flatten()>0, 'Mais inadimplente', 'Menos inadimplente')
+})
+
+
+clf_digitalizacao = LogisticRegressionCV(random_state=42, Cs=1)
+clf_digitalizacao.fit(trainingSet.drop(['default','digitalizacao'], axis=1), trainingSet['digitalizacao'])
+
+featureImportanceDigital = pd.DataFrame({
+    'features':clf_digitalizacao.feature_names_in_,
+    # 'importance':clf.feature_importances_,
+    'importance':np.round(clf_digitalizacao.coef_.flatten(),4),
+    'color':np.where(clf_digitalizacao.coef_.flatten()>0, 'Mais digital', 'Menos digital')
+})
+
+
+
+cols = st.columns(2)
+
+with cols[0]:
+    fig = px.bar(
+        featureImportanceDefault.sort_values('importance', ascending=False),
+        y='features',
+        x='importance',
+        title='Produtos com mais impacto na inadimplência',
+        labels={'importance': 'Importance', 'features': 'Features'},
+        color='color',
+        color_discrete_map={'Mais inadimplente':'red','Menos inadimplente':'blue'},
+        orientation='h'
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig, use_container_width=True)
+
+with cols[1]:
+    fig = px.bar(
+        featureImportanceDigital.sort_values('importance', ascending=False),
+        y='features',
+        x='importance',
+        title='Produtos com mais impacto na digitalização',
+        labels={'importance': 'Importance', 'features': 'Features'},
+        color='color',
+        color_discrete_map={'Menos digital':'red','Mais digital':'blue'},
+        orientation='h'
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig, use_container_width=True)
+
+###########################################################
+st.write("## Comparativo entre bancos")
+
+bancosPorPrincipalidade = df['banco_principal'].value_counts().index.tolist()
+
+listaBancos  = st.multiselect(
+        "Filtre os bancos para o estudo",
+        bancosPorPrincipalidade,
+        bancosPorPrincipalidade[0],
+        )
+
+df_consolidado = (
+    df_products
+    .pivot_table(
+        index='banco',
+        columns='produto',
+        values='id',
+        aggfunc='nunique',
+        fill_value=0,
+    )
+    .apply(lambda x:x/x.sum(), axis=1)
+    .T
+)
+
+# st.dataframe(df_consolidado[listaBancos])
+
+with chart_container(df_consolidado[listaBancos]):
+    cutoff = st.slider('Top%', 0.0, 1.0, 0.0,0.01)
+
+    temp = df_consolidado[listaBancos].sort_values(listaBancos, ascending=[False]*len(listaBancos))
+    temp = temp.query(" and ".join([f"{col} > {cutoff}" for col in listaBancos]))
+
+    fig = px.bar(
+        temp.reset_index(),
+        x="produto",
+        y=listaBancos,
+        barmode='group',
+    )
+    fig.update_layout(legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-1,
+        x=-0
+    ))
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
+st.markdown('## quem está mais concentrado por produto versus a média')
+
+listaProdutos  = st.selectbox(
+        "Selecione o produto",
+        df_consolidado.index,
+        0,
+        )
+
+posicao_relativa = (df_consolidado.T/df_consolidado.T.median(axis=0)).T -1
+posicao_relativa = posicao_relativa.query('produto == @listaProdutos')
+posicao_relativa = posicao_relativa.T.sort_values(listaProdutos, ascending=False)
+
+# #bar chart
+# st.write(posicao_relativa.reset_index())
+with chart_container(posicao_relativa):
+
+    fig = px.bar(
+        posicao_relativa.reset_index(),
+        x="banco",
+        y=listaProdutos,
+        barmode='group',
+    )
+    fig.update_layout(legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-1,
+        x=-0
+    ))
+    st.plotly_chart(fig, use_container_width=True)
 
 
 ##################################################################################################################
@@ -235,48 +392,6 @@ with chart_container(df_cesta_banco):
         orientation="h",
         yanchor="bottom",
         y=-0.5,
-        x=-0
-    ))
-    st.plotly_chart(fig, use_container_width=True)
-
-
-###########################################################
-st.write("## Comparativo entre bancos")
-
-bancosPorPrincipalidade = df['banco_principal'].value_counts().index.tolist()
-
-listaBancos  = st.multiselect(
-        "Filtre os bancos para o estudo",
-        bancosPorPrincipalidade,
-        bancosPorPrincipalidade[0],
-        )
-
-df_consolidado = (
-    df_products
-    .pivot_table(
-        index='banco',
-        columns='produto',
-        values='id',
-        aggfunc='nunique',
-        fill_value=0,
-    )
-    .apply(lambda x:x/x.sum(), axis=1)
-    .T
-)
-
-# st.dataframe(df_consolidado[listaBancos])
-
-with chart_container(df_consolidado[listaBancos]):
-    fig = px.bar(
-        df_consolidado[listaBancos].reset_index(),
-        x="produto",
-        y=listaBancos,
-        barmode='group',
-    )
-    fig.update_layout(legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=-1,
         x=-0
     ))
     st.plotly_chart(fig, use_container_width=True)

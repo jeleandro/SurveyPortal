@@ -19,20 +19,42 @@ from data_model import categoricals_demographics, load_survey_core, load_know_ba
 ##############################################################################################################
 #### Page config
 st.set_page_config(layout="wide")
-df_core = load_survey_core()
+df_core_full = load_survey_core()
 
+df_nps = load_nps_questions()
+
+df_indice_digital = (
+    df_nps.query('pergunta == "consigo_contratar_100digital"')
+    .assign(digitalizacao = lambda x:x['nps'].str.lower().isin(['concordo','concordo totalmente']).astype(int))
+    [['id','digitalizacao']]
+)
+
+df_core_full = pd.merge(df_core_full, df_indice_digital, on='id', how='left')
 
 ##############################################################################################################
 #### Side bar config
 
 with st.sidebar:
-    bancos_principais = ['']+df_core['banco_principal'].value_counts().index.values.tolist()
-    chosenBank = ''
+    st.write("## Escolha uma categoria");
+    banco_categ = st.selectbox("Categoria", ['Todos']+constants.CATEG_BANK_CATEG.categories.tolist(), 0)
+
+    if banco_categ != 'Todos':
+        df_core = df_core_full.query('agrupamento_bancos == @banco_categ')
+    else:
+        df_core = df_core_full
+
     st.write('## Escolha um banco')
+    bancos_principais = ['Todos']+df_core['banco_principal'].value_counts().index.values.tolist()
     chosenBank = st.selectbox("Banco", bancos_principais, 0)
 
-    if chosenBank != '':
+    if chosenBank != 'Todos':
         df_core = df_core.query('banco_principal == @chosenBank')
+    else:
+        df_core = df_core
+
+    if len(df_core) < 10:
+        st.write("Nenhum dado encontrado para a seleção. Considere mudar o filtro.")
+        st.stop()
 
 
 with st.sidebar:
@@ -96,14 +118,15 @@ def basicStats(df, column, precision=2):
             n=('id', 'nunique'),
             default=('default', lambda x: (x=='Sim').mean()),
             bancarizacao=('ind_bancarizado', lambda x: (x=='Bancarizado').mean()),
+            digitalizacao=('digitalizacao', lambda x: x.mean()),
         )
         .assign(pct_n=lambda x: x['n'] / x['n'].sum())
         .assign(pct_bancarizado=lambda x: x['n_bancarizado'] / x['n_bancarizado'].sum())
         .assign(pct_default=lambda x: x['n_default'] / x['n_default'].sum())
-        [['n','pct_n', 'n_default','pct_default','default','n_bancarizado','pct_bancarizado', 'bancarizacao']]
+        [['n','pct_n', 'n_default','pct_default','default','n_bancarizado','pct_bancarizado', 'bancarizacao','digitalizacao']]
         .assign(quadrante=lambda x:
-                (x['bancarizacao'] > x['bancarizacao'].mean()).astype(int) +\
-                (x['default'] > x['default'].mean()).astype(int)*10)
+                (x['digitalizacao'] > x['digitalizacao'].median()).astype(int) +\
+                (x['default'] > x['default'].median()).astype(int)*10)
         .assign(quadrante=lambda x: x['quadrante'].apply(lambda x: f"{x:02d}"))
         .query('n > 10')
         .round(precision)
@@ -116,11 +139,11 @@ def basicStats(df, column, precision=2):
 with st.expander("Filtre as informações demográficas:"):
     chart_cols = st.multiselect(
         "",
-        categoricals_demographics,
-        categoricals_demographics,
+        categoricals_demographics+['agrupamento_bancos'],
+        categoricals_demographics+['agrupamento_bancos'],
     )
 
-for column in chart_cols + ['agrupamento_bancos']:
+for column in chart_cols:
     if chosenBank != '' and column in ('banco_principal','agrupamento_bancos'):
         continue;
     
@@ -131,7 +154,6 @@ for column in chart_cols + ['agrupamento_bancos']:
     if len(df_stats) == 0:
         st.write(f"Não há dados suficientes para esse banco")
         continue;
-
 
     if sortingChoice == "Quantidade":
         df_stats = df_stats.sort_values(by='n', ascending=False)
@@ -189,6 +211,15 @@ for column in chart_cols + ['agrupamento_bancos']:
                 textposition="top center",
                 line_color="blue",
                 mode="text+lines"), secondary_y=True)
+            
+            fig.add_trace(go.Scatter(
+                x=df_stats[column],
+                y=df_stats['digitalizacao'],
+                name='Digitalização',
+                text=[f"{v:.1%}" for v in df_stats['digitalizacao']],
+                textposition="top center",
+                line_color="green",
+                mode="text+lines"), secondary_y=True)
                         
             fig.add_trace(go.Scatter(
                 x=df_stats[column],
@@ -206,9 +237,9 @@ for column in chart_cols + ['agrupamento_bancos']:
 
         #### ---- Buble chart
         with row[2]:
-            df_stats = df_stats.query('n > 5')
+            df_stats = df_stats.query('n > 3')
             fig = px.scatter(df_stats,
-                x="bancarizacao",
+                x="digitalizacao",
                 y="default",
 	            size="pct_n",
                 color="quadrante",
@@ -217,7 +248,7 @@ for column in chart_cols + ['agrupamento_bancos']:
                 size_max=40
             )
             fig.add_hline(y=df_stats['default'].mean(), line_dash="dot", line_color="gray")
-            fig.add_vline(x=df_stats['bancarizacao'].mean(),  line_dash="dot", line_color="gray")
+            fig.add_vline(x=df_stats['digitalizacao'].mean(),  line_dash="dot", line_color="gray")
             fig.update_layout(showlegend=False)
             st.plotly_chart(fig, use_container_width=True)
 
