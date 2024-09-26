@@ -1,6 +1,9 @@
-conda env create -f environment.yml
-conda activate surveyportal
+build_env:
+	conda env create -f environment.yml
+	conda activate surveyportal
 
+build_docker:
+	docker build -t streamlit .
 
-docker build -t streamlit .
-docker run -p 8501:8501 streamlit
+run_docker:
+	docker run -p 8501:8501 streamlit
