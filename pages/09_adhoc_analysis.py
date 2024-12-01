@@ -36,6 +36,7 @@ with st.expander("Exemplos das tableas"):
     st.write("utilize a columna id para unir as tabelas")
 
     names = ['Core',"Conhece Banco","Tem Banco","Produto por banco" , 'Dados do tipo NPS', 'Dados do tipo Ranking']
+    tableNames = ['Core',"know_bank","has_bank","prod_per_bank" , 'nps', 'rankings']
     tabs = st.tabs(names)
 
     for cont, table, title in zip(

@@ -82,8 +82,6 @@ CATEG_BANK_CATEG =  pd.CategoricalDtype(
 
 
 agrupamento_bancos_geral = {
-    
-
     'CEF': 'BancoPublico',
     'BB': 'Incumbentes',
     'Santander': 'Incumbentes',

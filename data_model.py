@@ -13,17 +13,15 @@ other_cols = ['ind_bancarizado','default']
 @st.cache_data
 def load_survey_core():
     df_pesquisa = pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='pesquisa')
-    
+    cols = ['id']+categoricals_demographics+other_cols
+    unused = [c for c in df_pesquisa.columns if c not in cols]
     df_pesquisa = (
         df_pesquisa
         .assign(faixa_idade=lambda x: x['faixa_idade'].map(constants.FAIXA_IDADE))
-        
         .assign(classe_social=lambda x: x['faixa_renda'].map(constants.CATEG_SOCIAL_CLASS))
-        [['id']+categoricals_demographics+other_cols]
+        [cols+unused]
         .assign(agrupamento_bancos=lambda x: x['banco_principal'].map(constants.agrupamento_bancos_geral))
         .assign(tipo_emprego=lambda x: x['tipo_emprego'].str.replace(')',''))
-
-        # .astype({'faixa_idade':str})
         .astype({c:'category' for c in categoricals_demographics})
         .astype({'estado_civil':constants.CATEG_MARITAL})
         .astype({'escolaridade':constants.CATEG_EDUCATION})
