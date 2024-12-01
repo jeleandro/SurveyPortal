@@ -15,7 +15,7 @@ sys.path.append('..')
 
 import constants
 import pandas_utils
-from data_model import categoricals_demographics, load_survey_core, load_know_bank, load_nps_questions, load_ranking_questions
+from data_model import categoricals_demographics, load_survey_core, load_know_bank,load_has_bank,load_product_bank, load_nps_questions, load_ranking_questions
 
 
 ################## Page config ########################################################################
@@ -23,17 +23,25 @@ st.set_page_config(layout="wide")
 
 
 core = load_survey_core()
+know_bank = load_know_bank()
+has_bank = load_has_bank()
 nps = load_nps_questions()
 rankings = load_ranking_questions()
+prod_per_bank = load_product_bank()
 
 st.title("Ad-hoc Analysis - Using SQL")
 
 with st.expander("Exemplos das tableas"):
     st.write("Exemplos de tabelas disponíveis para consulta")
     st.write("utilize a columna id para unir as tabelas")
-    tabs = st.tabs(["Core", "NPS", "Ranking"])
 
-    for cont, table, title in zip(tabs, [core, nps, rankings], ['Core', 'Dados do tipo NPS', 'Dados do tipo Ranking']):
+    names = ['Core',"Conhece Banco","Tem Banco","Produto por banco" , 'Dados do tipo NPS', 'Dados do tipo Ranking']
+    tabs = st.tabs(names)
+
+    for cont, table, title in zip(
+        tabs,
+        [core,know_bank, has_bank, prod_per_bank, nps, rankings],
+        names):
         with cont:
             st.write("# "+title)
             st.write(table.dtypes.to_frame('tipo de dados'))

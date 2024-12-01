@@ -9,7 +9,7 @@ from streamlit_extras.chart_container import chart_container
 
 # including the parent folder on the path
 import sys
-sys.path.append('..')
+sys.path.append('.')
 
 import constants
 import pandas_utils

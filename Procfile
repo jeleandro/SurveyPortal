@@ -1,1 +1,2 @@
-web: streamlit run index.py --server.port 80
+web: sh setup.sh && streamlit run index.py
+

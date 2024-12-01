@@ -10,13 +10,9 @@ dependencies:
   - jupyter
   - seaborn
   - scipy
-  - statsmodels
   - plotly
   - streamlit
 
-
-
-  - polars
   - pyarrow
   - openpyxl
   - xlsxwriter
@@ -29,14 +25,14 @@ dependencies:
   - streamlit
   - streamlit-extras
   - plotly
-  - pydeck
+  # - pydeck
 
 # ml
   - scikit-learn==1.5.1
-  - shap
-  - seaborn
-  - statsmodels
-  - xgboost
-  - ydata-profiling
+  # - shap
+  # - seaborn
+  # - statsmodels
+  # - xgboost
+  # - ydata-profiling
   # - optbinning
-  - nltk
+  # - nltk

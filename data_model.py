@@ -12,7 +12,7 @@ other_cols = ['ind_bancarizado','default']
 
 @st.cache_data
 def load_survey_core():
-    df_pesquisa = pd.read_excel(f'../data/{constants.SURVEY_FILE}', sheet_name='pesquisa')
+    df_pesquisa = pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='pesquisa')
     
     df_pesquisa = (
         df_pesquisa
@@ -42,7 +42,7 @@ def load_survey_core():
 def load_know_bank():
 
     df = (
-        pd.read_excel(f'../data/{constants.SURVEY_FILE}', sheet_name='conhece_banco')
+        pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='conhece_banco')
         .assign(agrupamento_bancos=lambda x: x['banco'].map(constants.agrupamento_bancos_geral))
         .astype({'banco':'category'})
     )
@@ -50,9 +50,9 @@ def load_know_bank():
     return df
 
 @st.cache_data
-def load_has_banck():
+def load_has_bank():
     df = (
-        pd.read_excel(f'../data/{constants.SURVEY_FILE}', sheet_name='possui_banco')
+        pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='possui_banco')
     )
 
     return df
@@ -60,7 +60,7 @@ def load_has_banck():
 @st.cache_data
 def load_nps_questions():
     df = (
-        pd.read_excel(f'../data/{constants.SURVEY_FILE}', sheet_name='questoes_nps')
+        pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='questoes_nps')
     )
 
     return df
@@ -69,7 +69,7 @@ def load_nps_questions():
 @st.cache_data
 def load_product_bank():
     df = (
-        pd.read_excel(f'../data/{constants.SURVEY_FILE}', sheet_name='produto_por_banco')
+        pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='produto_por_banco')
     )
 
     return df
@@ -78,7 +78,7 @@ def load_product_bank():
 @st.cache_data
 def load_ranking_questions():
     df = (
-        pd.read_excel(f'../data/{constants.SURVEY_FILE}', sheet_name='questoes_ranking')
+        pd.read_excel(f'./data/{constants.SURVEY_FILE}', sheet_name='questoes_ranking')
     )
 
     return df
